@@ -16,14 +16,18 @@
 
 package com.example.android.BluetoothChat;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.os.Bundle;
@@ -43,20 +47,23 @@ public class BluetoothChatService {
     private static final boolean D = true;
 
     // Name for the SDP record when creating server socket
-    private static final String NAME_SECURE = "BluetoothChatSecure";
-    private static final String NAME_INSECURE = "BluetoothChatInsecure";
+    //private static final String NAME_SECURE = "BluetoothChatSecure";
+    //private static final String NAME_INSECURE = "BluetoothChatInsecure";
 
     // Unique UUID for this application
-    private static final UUID MY_UUID_SECURE =
-        UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
-    private static final UUID MY_UUID_INSECURE =
-        UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
-
+    //private static final UUID MY_UUID_SECURE =
+    //   UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+    //private static final UUID MY_UUID_INSECURE =
+    //    UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
+    private static final UUID MY_UUID = 
+        	//UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
+        	UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    
     // Member fields
     private final BluetoothAdapter mAdapter;
     private final Handler mHandler;
-    private AcceptThread mSecureAcceptThread;
-    private AcceptThread mInsecureAcceptThread;
+    //private AcceptThread mSecureAcceptThread;
+    //private AcceptThread mInsecureAcceptThread;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
     private int mState;
@@ -67,6 +74,120 @@ public class BluetoothChatService {
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
+    public BufferedWriter buf;
+    public int fileCount = 4;
+
+    public static String convertStreamToString(InputStream is) throws IOException {
+        /*
+         * To convert the InputStream to String we use the BufferedReader.readLine()
+         * method. We iterate until the BufferedReader return null which means
+         * there's no more data to read. Each line will appended to a StringBuilder
+         * and returned as String.
+         */
+        if (is != null) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+            } finally {
+                
+            }
+            return sb.toString();
+        } else {        
+            return "";
+        }
+    }
+    
+    
+    /*
+	private Vibrator v;
+	// Vibrate for 300 milliseconds
+	
+	public void PopUp(String title, String message, int time)
+	{
+	AlertDialog.Builder alt_bld = new AlertDialog.Builder(this);
+c
+	alt_bld.setMessage("Vibrate?")
+    	.setCancelable(false)
+    	.setPositiveButton("Okay", new DialogInterface.OnClickListener()
+    	{
+    	public void onClick(DialogInterface dialog, int id)
+    		{// Action for 'Yes' Button
+    		}
+    	})
+    	.setNegativeButton("Thanks", new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int id)
+			{//  Action for 'NO' Button
+				dialog.cancel();
+			}
+		});
+		AlertDialog alert = alt_bld.create();
+		// Title for AlertDialog
+		alert.setTitle("Posture Up!");
+		// Icon for AlertDialog
+		//alert.setIcon(R.drawable.icon);
+	
+		alert.show();
+		v.vibrate(time);	
+		
+		//Context context = 
+		//CharSequence text = "Hello toast!";
+		//int duration = Toast.LENGTH_SHORT;
+		//Toast toast = Toast.makeText(, text, duration);					
+	}*/
+    
+    public void newDataLog(String name)
+    {      
+    	// Set an EditText view to get user input 
+    	
+    	File logFile = new File("sdcard/dropbox/posture project/"+name+fileCount+".txt");
+        if (!logFile.exists())
+        {
+           try
+           {
+              logFile.createNewFile();
+              buf = new BufferedWriter(new FileWriter(logFile, true));
+           } 
+           catch (IOException e)
+           {              // TODO Auto-generated catch block
+              e.printStackTrace();
+           }
+        }
+    }
+    
+    public void appendDataLog(BufferedWriter buf, String text)
+    {       
+       try
+       {          //BufferedWriter for performance, true to set append to file flag
+          buf.append(System.currentTimeMillis()+": "+ text);
+          buf.newLine();
+       }
+       catch (IOException e)
+       {          // TODO Auto-generated catch block
+          e.printStackTrace();
+       }
+    }
+    
+    
+    public void closeDataLog(BufferedWriter buf)
+    {       
+    	try {
+		buf.close();
+    	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+    	}
+    }
+    
+    
+    
+    
+    
     /**
      * Constructor. Prepares a new BluetoothChat session.
      * @param context  The UI Activity Context
@@ -108,24 +229,24 @@ public class BluetoothChatService {
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {mConnectedThread.cancel(); mConnectedThread = null;}
 
-        setState(STATE_LISTEN);
+        setState(STATE_NONE);
 
         // Start the thread to listen on a BluetoothServerSocket
-        if (mSecureAcceptThread == null) {
+        /*if (mSecureAcceptThread == null) {
             mSecureAcceptThread = new AcceptThread(true);
             mSecureAcceptThread.start();
         }
         if (mInsecureAcceptThread == null) {
             mInsecureAcceptThread = new AcceptThread(false);
             mInsecureAcceptThread.start();
-        }
+        }*/
     }
 
     /**
      * Start the ConnectThread to initiate a connection to a remote device.
      * @param device  The BluetoothDevice to connect
      * @param secure Socket Security type - Secure (true) , Insecure (false)
-     */
+     **/
     public synchronized void connect(BluetoothDevice device, boolean secure) {
         if (D) Log.d(TAG, "connect to: " + device);
 
@@ -141,6 +262,9 @@ public class BluetoothChatService {
         mConnectThread = new ConnectThread(device, secure);
         mConnectThread.start();
         setState(STATE_CONNECTING);
+        
+        //datalog
+        newDataLog("text");
     }
 
     /**
@@ -159,14 +283,14 @@ public class BluetoothChatService {
         if (mConnectedThread != null) {mConnectedThread.cancel(); mConnectedThread = null;}
 
         // Cancel the accept thread because we only want to connect to one device
-        if (mSecureAcceptThread != null) {
+       /* if (mSecureAcceptThread != null) {
             mSecureAcceptThread.cancel();
             mSecureAcceptThread = null;
         }
         if (mInsecureAcceptThread != null) {
             mInsecureAcceptThread.cancel();
             mInsecureAcceptThread = null;
-        }
+        }*/
 
         // Start the thread to manage the connection and perform transmissions
         mConnectedThread = new ConnectedThread(socket, socketType);
@@ -180,6 +304,8 @@ public class BluetoothChatService {
         mHandler.sendMessage(msg);
 
         setState(STATE_CONNECTED);
+        
+        
     }
 
     /**
@@ -198,7 +324,7 @@ public class BluetoothChatService {
             mConnectedThread = null;
         }
 
-        if (mSecureAcceptThread != null) {
+ /*       if (mSecureAcceptThread != null) {
             mSecureAcceptThread.cancel();
             mSecureAcceptThread = null;
         }
@@ -206,7 +332,7 @@ public class BluetoothChatService {
         if (mInsecureAcceptThread != null) {
             mInsecureAcceptThread.cancel();
             mInsecureAcceptThread = null;
-        }
+        }*/
         setState(STATE_NONE);
     }
 
@@ -231,7 +357,8 @@ public class BluetoothChatService {
      * Indicate that the connection attempt failed and notify the UI Activity.
      */
     private void connectionFailed() {
-        // Send a failure message back to the Activity
+    	setState(STATE_NONE);
+    	// Send a failure message back to the Activity
         Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
         bundle.putString(BluetoothChat.TOAST, "Unable to connect device");
@@ -246,7 +373,10 @@ public class BluetoothChatService {
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
-        // Send a failure message back to the Activity
+    	setState(STATE_NONE);
+    	closeDataLog(buf);
+    	
+    	// Send a failure message back to the Activity
         Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
         bundle.putString(BluetoothChat.TOAST, "Device connection was lost");
@@ -262,7 +392,7 @@ public class BluetoothChatService {
      * like a server-side client. It runs until a connection is accepted
      * (or until cancelled).
      */
-    private class AcceptThread extends Thread {
+/*    private class AcceptThread extends Thread {
         // The local server socket
         private final BluetoothServerSocket mmServerSocket;
         private String mSocketType;
@@ -339,7 +469,7 @@ public class BluetoothChatService {
                 Log.e(TAG, "Socket Type" + mSocketType + "close() of server failed", e);
             }
         }
-    }
+    }*/
 
 
     /**
@@ -352,6 +482,7 @@ public class BluetoothChatService {
         private final BluetoothDevice mmDevice;
         private String mSocketType;
 
+        /*
         public ConnectThread(BluetoothDevice device, boolean secure) {
             mmDevice = device;
             BluetoothSocket tmp = null;
@@ -371,7 +502,21 @@ public class BluetoothChatService {
                 Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
             }
             mmSocket = tmp;
+        }*/
+        
+        public ConnectThread(BluetoothDevice device, boolean secure) {
+            mmDevice = device;
+            BluetoothSocket tmp = null;
+            // Get a BluetoothSocket for a connection with the given BluetoothDevice
+            try {
+                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
+            } catch (IOException e) {
+                //
+            }
+            mmSocket = tmp;
         }
+        
+        
 
         public void run() {
             Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
@@ -387,13 +532,15 @@ public class BluetoothChatService {
                 mmSocket.connect();
             } catch (IOException e) {
                 // Close the socket
+            	connectionFailed();
                 try {
                     mmSocket.close();
                 } catch (IOException e2) {
                     Log.e(TAG, "unable to close() " + mSocketType +
                             " socket during connection failure", e2);
                 }
-                connectionFailed();
+                //connectionFailed();
+                BluetoothChatService.this.start();
                 return;
             }
 
@@ -409,6 +556,7 @@ public class BluetoothChatService {
         public void cancel() {
             try {
                 mmSocket.close();
+                closeDataLog(buf);
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect " + mSocketType + " socket failed", e);
             }
@@ -423,7 +571,7 @@ public class BluetoothChatService {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
-
+             
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             Log.d(TAG, "create ConnectedThread: " + socketType);
             mmSocket = socket;
@@ -442,11 +590,13 @@ public class BluetoothChatService {
             mmOutStream = tmpOut;
         }
 
+        
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             byte[] buffer = new byte[1024];
-            int bytes;
-
+            int bytes=1;
+            //String stringer;
+            
             // Keep listening to the InputStream while connected
             while (true) {
                 try {
@@ -454,13 +604,24 @@ public class BluetoothChatService {
                     bytes = mmInStream.read(buffer);
 
                     // Send the obtained bytes to the UI Activity
+                	
+                	//stringer = convertStreamToString(mmInStream);
                     mHandler.obtainMessage(BluetoothChat.MESSAGE_READ, bytes, -1, buffer)
-                            .sendToTarget();
+                           .sendToTarget();
+                                    	
+                    //appendDataLog(buf, stringer);
+
+                    //v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    //PopUp("Hey", "Prop Up Your Posture!", 2000);
+                    
+                    
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
                     break;
                 }
+
+
             }
         }
 
@@ -483,9 +644,12 @@ public class BluetoothChatService {
         public void cancel() {
             try {
                 mmSocket.close();
+                closeDataLog(buf);
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
-        }
+        }      
+        
     }
+   
 }

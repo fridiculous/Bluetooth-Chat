@@ -29,8 +29,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -80,7 +80,14 @@ public class BluetoothChat extends Activity {
     // Member object for the chat services
     private BluetoothChatService mChatService = null;
 
+    //Timestamp
+    //SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
+    //String format = s.format(new Date());
+    
 
+    
+    
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -269,7 +276,10 @@ public class BluetoothChat extends Activity {
                 byte[] readBuf = (byte[]) msg.obj;
                 // construct a string from the valid bytes in the buffer
                 String readMessage = new String(readBuf, 0, msg.arg1);
-                mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
+                //String readMessage = (String) msg.obj;
+                //mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
+                mConversationArrayAdapter.add(System.currentTimeMillis()+": " + readMessage);
+                
                 break;
             case MESSAGE_DEVICE_NAME:
                 // save the connected device's name

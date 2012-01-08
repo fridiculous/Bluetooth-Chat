@@ -19,10 +19,12 @@ package com.example.android.BluetoothChat;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -53,7 +55,8 @@ public class BluetoothChat extends Activity {
     public static final int MESSAGE_WRITE = 3;
     public static final int MESSAGE_DEVICE_NAME = 4;
     public static final int MESSAGE_TOAST = 5;
-
+    public static final int MESSAGE_POSTURE_BAD = 6;
+    
     // Key names received from the BluetoothChatService Handler
     public static final String DEVICE_NAME = "device_name";
     public static final String TOAST = "toast";
@@ -73,6 +76,7 @@ public class BluetoothChat extends Activity {
     private String mConnectedDeviceName = null;
     // Array adapter for the conversation thread
     private ArrayAdapter<String> mConversationArrayAdapter;
+    
     // String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
     // Local Bluetooth adapter
@@ -83,10 +87,7 @@ public class BluetoothChat extends Activity {
     //Timestamp
     //SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
     //String format = s.format(new Date());
-    
-
-    
-    
+    public Vibrator v; 
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -97,7 +98,10 @@ public class BluetoothChat extends Activity {
         requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.main);
         getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_title);
-
+        
+        v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);    
+        
+        
         // Set up the custom title
         mTitle = (TextView) findViewById(R.id.title_left_text);
         mTitle.setText(R.string.app_name);
@@ -246,9 +250,12 @@ public class BluetoothChat extends Activity {
 
     // The Handler that gets information back from the BluetoothChatService
     private final Handler mHandler = new Handler() {
-        @Override
+        
+
+    	@Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
+        	//mConversationArrayAdapter.setNotifyOnChange(false);
+    		switch (msg.what) {
             case MESSAGE_STATE_CHANGE:
                 if(D) Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
                 switch (msg.arg1) {
@@ -278,8 +285,8 @@ public class BluetoothChat extends Activity {
                 String readMessage = new String(readBuf, 0, msg.arg1);
                 //String readMessage = (String) msg.obj;
                 //mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
+                	
                 mConversationArrayAdapter.add(System.currentTimeMillis()+": " + readMessage);
-                
                 break;
             case MESSAGE_DEVICE_NAME:
                 // save the connected device's name
@@ -291,6 +298,13 @@ public class BluetoothChat extends Activity {
                 Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
                                Toast.LENGTH_SHORT).show();
                 break;
+            case MESSAGE_POSTURE_BAD:
+                Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
+                               Toast.LENGTH_SHORT).show();
+                v.vibrate(500);
+                break;                
+               	
+                
             }
         }
     };
@@ -334,6 +348,8 @@ public class BluetoothChat extends Activity {
         mChatService.connect(device, secure);
     }
 
+    
+    
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -364,3 +380,4 @@ public class BluetoothChat extends Activity {
     }
 
 }
+

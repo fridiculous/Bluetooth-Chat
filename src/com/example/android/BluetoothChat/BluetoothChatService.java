@@ -22,14 +22,16 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.UUID;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -75,15 +77,59 @@ public class BluetoothChatService {
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
     public BufferedWriter buf;
-    public int fileCount = 4;
-
-    public static String convertStreamToString(InputStream is) throws IOException {
+    private static final int movavgnum = 870; //1 min
+    public double[] movavg = new double[movavgnum];    
+    public boolean alarmOn = false;
+    
+    public double mean(double[] p)
+    {
+        double sum = 0;  // sum of all the elements
+        for (int i=0; i<p.length; i++) {
+            sum += p[i];
+        }
+        return sum / p.length;
+    }    
+    
+    private void initmovavg()
+    {
+    for (int i=0; i <movavg.length; i++)
+    	{
+    	movavg[i] = 0;
+    	}
+    }
+    
+    private int movingAverage(int newnum)
+    	{
+    	for (int i=1; i < movavg.length; i++)
+    		{
+    		movavg[i-1] = movavg[i];
+    		}
+    	movavg[movavg.length-1] = (double) newnum;
+    	if (mean(movavg)>0.5)
+    		{
+    		return 1;
+    		}
+    	else
+    		{
+    		return 0;
+    		}
+    	}
+    
+    
+    private String[] splitLines(String str)
+    	{
+ 	   String[] lines = str.split("\r\n|\n\r|\r|\n", 2);
+ 	   return  lines;
+ 	   }    
+    
+    //public static String convertStreamToString(InputStream is) throws IOException {
         /*
          * To convert the InputStream to String we use the BufferedReader.readLine()
          * method. We iterate until the BufferedReader return null which means
          * there's no more data to read. Each line will appended to a StringBuilder
          * and returned as String.
          */
+    /*	
         if (is != null) {
             StringBuilder sb = new StringBuilder();
             String line;
@@ -94,36 +140,37 @@ public class BluetoothChatService {
                     sb.append(line);
                 }
             } finally {
-                
+                is.close();
             }
             return sb.toString();
         } else {        
             return "";
         }
-    }
+    } */   
     
     
-    /*
-	private Vibrator v;
-	// Vibrate for 300 milliseconds
-	
 	public void PopUp(String title, String message, int time)
-	{
-	AlertDialog.Builder alt_bld = new AlertDialog.Builder(this);
-c
-	alt_bld.setMessage("Vibrate?")
+		{
+		//v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+		alarmOn=true;
+		AlertDialog.Builder alt_bld = new AlertDialog.Builder(null);
+
+		alt_bld.setMessage("Did you fix your posture")
     	.setCancelable(false)
     	.setPositiveButton("Okay", new DialogInterface.OnClickListener()
     	{
     	public void onClick(DialogInterface dialog, int id)
     		{// Action for 'Yes' Button
+    		alarmOn=false;
+    		initmovavg();
     		}
     	})
     	.setNegativeButton("Thanks", new DialogInterface.OnClickListener()
 		{
 			public void onClick(DialogInterface dialog, int id)
 			{//  Action for 'NO' Button
-				dialog.cancel();
+			alarmOn=true;
+			dialog.cancel();
 			}
 		});
 		AlertDialog alert = alt_bld.create();
@@ -133,45 +180,44 @@ c
 		//alert.setIcon(R.drawable.icon);
 	
 		alert.show();
-		v.vibrate(time);	
+		//v.vibrate(time);	
 		
-		//Context context = 
 		//CharSequence text = "Hello toast!";
 		//int duration = Toast.LENGTH_SHORT;
 		//Toast toast = Toast.makeText(, text, duration);					
-	}*/
+	}
     
+	
     public void newDataLog(String name)
-    {      
-    	// Set an EditText view to get user input 
-    	
-    	File logFile = new File("sdcard/dropbox/posture project/"+name+fileCount+".txt");
-        if (!logFile.exists())
-        {
-           try
-           {
+    {       	
+    	Date tdate = new Date();
+    	File logFile = new File("sdcard/dropbox/posture project/"+name+"_"+tdate.getMonth()+"_"+tdate.getDate()+"_"+tdate.getYear()+".txt");
+        try
+        	{
               logFile.createNewFile();
               buf = new BufferedWriter(new FileWriter(logFile, true));
-           } 
+          	
+              //initializing movavg
+              initmovavg();
+    		} 
            catch (IOException e)
            {              // TODO Auto-generated catch block
               e.printStackTrace();
            }
-        }
     }
+    
     
     public void appendDataLog(BufferedWriter buf, String text)
     {       
        try
        {          //BufferedWriter for performance, true to set append to file flag
-          buf.append(System.currentTimeMillis()+": "+ text);
-          buf.newLine();
+          buf.append(text);
        }
        catch (IOException e)
        {          // TODO Auto-generated catch block
           e.printStackTrace();
        }
-    }
+    }    
     
     
     public void closeDataLog(BufferedWriter buf)
@@ -182,10 +228,7 @@ c
 		// TODO Auto-generated catch block
 		e.printStackTrace();
     	}
-    }
-    
-    
-    
+    }        
     
     
     /**
@@ -264,7 +307,7 @@ c
         setState(STATE_CONNECTING);
         
         //datalog
-        newDataLog("text");
+        newDataLog("Simon_Map3_Unconnected");
     }
 
     /**
@@ -303,9 +346,7 @@ c
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
-        setState(STATE_CONNECTED);
-        
-        
+        setState(STATE_CONNECTED);        
     }
 
     /**
@@ -481,7 +522,6 @@ c
         private final BluetoothSocket mmSocket;
         private final BluetoothDevice mmDevice;
         private String mSocketType;
-
         /*
         public ConnectThread(BluetoothDevice device, boolean secure) {
             mmDevice = device;
@@ -510,14 +550,11 @@ c
             // Get a BluetoothSocket for a connection with the given BluetoothDevice
             try {
                 tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) {
-                //
-            }
+            } catch (IOException e) {}
             mmSocket = tmp;
         }
         
         
-
         public void run() {
             Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
             setName("ConnectThread" + mSocketType);
@@ -543,6 +580,7 @@ c
                 BluetoothChatService.this.start();
                 return;
             }
+            
 
             // Reset the ConnectThread because we're done
             synchronized (BluetoothChatService.this) {
@@ -585,7 +623,6 @@ c
             } catch (IOException e) {
                 Log.e(TAG, "temp sockets not created", e);
             }
-
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
         }
@@ -595,33 +632,83 @@ c
             Log.i(TAG, "BEGIN mConnectedThread");
             byte[] buffer = new byte[1024];
             int bytes=1;
-            //String stringer;
+            String stringer="";
+            BufferedReader bufre;
+            String stringertemp="";
+            String[] lines;
+            int stayclassy;
+
             
             // Keep listening to the InputStream while connected
             while (true) {
                 try {
                     // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
-
-                    // Send the obtained bytes to the UI Activity
+                	bytes = mmInStream.read(buffer);
                 	
-                	//stringer = convertStreamToString(mmInStream);
-                    mHandler.obtainMessage(BluetoothChat.MESSAGE_READ, bytes, -1, buffer)
-                           .sendToTarget();
-                                    	
-                    //appendDataLog(buf, stringer);
-
-                    //v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    //PopUp("Hey", "Prop Up Your Posture!", 2000);
+                    stringer = stringer + new String(buffer, 0, bytes);
                     
+                    /*
+                    while(countLines(stringer)<=1)
+                		{
+                    	bytes=mmInStream.read(buffer);
+                    	stringer = stringer + new String(buffer, 0, bytes);	
+                		}
+                    bufre=new BufferedReader(new StringReader(stringer));
+                    */
+                    //messageline = bufre.readLine();
+                    
+                    // Send the obtained bytes to the UI Activity
+                    
+                	//stringer = convertStreamToString(mmInStream);
+                    lines = splitLines(stringer);
+                    while (lines.length > 1)
+                    	{
+                    	//appendDataLog(buf, "lines.length"+Integer.toString(lines.length));                    	
+                    	mHandler.obtainMessage(BluetoothChat.MESSAGE_READ, lines[0].getBytes().length, -1, lines[0].getBytes())
+                           .sendToTarget();
+                    	appendDataLog(buf, System.currentTimeMillis()+","+ lines[0]);
+                    	
+                    	// classifier
+                       	stayclassy=1;
+                       	
+                       	
+                    	// output
+                    	if ((movingAverage(stayclassy)==1)&&(alarmOn==false))
+                    		{
+                            //PopUp("Hey", "Prop Up Your Posture!", 1000)
+                            Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_POSTURE_BAD);
+                            Bundle bundle = new Bundle();
+                            bundle.putString(BluetoothChat.TOAST, "Correct Your Posture");
+                            msg.setData(bundle);
+                            mHandler.sendMessage(msg);
+                    		
+                    		appendDataLog(buf, ",1,"+Integer.toString(movavgnum)+"\r\n");
+                    		initmovavg();
+                    		}
+                    	else if ((movingAverage(stayclassy)==0)&&(alarmOn==false))
+                    		{
+                    		appendDataLog(buf, ",0,"+Integer.toString(movavgnum)+"\r\n");                    		
+                    		}
+                    	
+                		
+                    	
+                    	/*stringertemp="";
+                    	for (int i=1; i < lines.length; i++ )
+                    		{
+                        	stringertemp = stringertemp + lines[i];                    		
+                        	appendDataLog(buf, "stringertemp - " + stringertemp);
+                    		}
+                    	lines = splitLines(stringertemp);*/
+                    	stringer = lines[1]; //get remainder
+                    	lines = splitLines(stringer);
+                    	}
+                	
                     
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
                     break;
                 }
-
-
             }
         }
 
@@ -648,8 +735,6 @@ c
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
-        }      
-        
+        }         
     }
-   
 }

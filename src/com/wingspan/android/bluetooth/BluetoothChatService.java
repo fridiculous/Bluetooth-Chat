@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.BluetoothChat;
+package com.wingspan.android.bluetooth;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

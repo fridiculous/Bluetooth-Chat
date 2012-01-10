@@ -2,7 +2,8 @@
 <classpath>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="com/wingspan/visualization/|com/wingspan/android/bluetooth/PostureClassifier.java|com/wingspan/predict/" kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="lib" path="C:/Users/Simon/Dropbox/Posture Project/src/classification/libsvm.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

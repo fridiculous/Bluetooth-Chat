@@ -16,6 +16,7 @@
 
 package com.wingspan.android.bluetooth;
 
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -40,6 +41,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.wingspan.android.BluetoothChat.R;
 
 /**
  * This is the main Activity that displays the current chat session.

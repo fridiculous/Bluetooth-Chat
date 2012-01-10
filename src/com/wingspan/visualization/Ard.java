@@ -1,7 +1,5 @@
 package com.wingspan.visualization;
 
-import processing.core.PApplet;
-import processing.serial.Serial;
 
 @SuppressWarnings("serial")
 public class Ard extends PApplet {

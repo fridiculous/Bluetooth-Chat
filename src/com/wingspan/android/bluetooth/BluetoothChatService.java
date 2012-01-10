@@ -16,9 +16,10 @@
 
 package com.wingspan.android.bluetooth;
 
-import java.io.BufferedReader;
+//import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+//import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,9 @@ import java.io.OutputStream;
 import java.util.Date;
 import java.util.UUID;
 
+//import libsvm.svm;
+//import libsvm.svm_model;
+//import libsvm.svm_node;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -77,7 +81,7 @@ public class BluetoothChatService {
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
     public BufferedWriter buf;
-    private static final int movavgnum = 870; //1 min
+    private static final int movavgnum = 870/5; //1 min
     public double[] movavg = new double[movavgnum];    
     public boolean alarmOn = false;
     
@@ -93,9 +97,7 @@ public class BluetoothChatService {
     private void initmovavg()
     {
     for (int i=0; i <movavg.length; i++)
-    	{
-    	movavg[i] = 0;
-    	}
+    	{ 	movavg[i] = 0; }
     }
     
     private int movingAverage(int newnum)
@@ -106,13 +108,9 @@ public class BluetoothChatService {
     		}
     	movavg[movavg.length-1] = (double) newnum;
     	if (mean(movavg)>0.5)
-    		{
-    		return 1;
-    		}
+    		{return 1; }
     	else
-    		{
-    		return 0;
-    		}
+    		{return 0; }
     	}
     
     
@@ -632,10 +630,9 @@ public class BluetoothChatService {
             Log.i(TAG, "BEGIN mConnectedThread");
             byte[] buffer = new byte[1024];
             int bytes=1;
-            String stringer="";
-            BufferedReader bufre;
-            String stringertemp="";
+            String stringer = "";
             String[] lines;
+//            PostureClassifier newclassy = null;
             int stayclassy;
 
             
@@ -668,8 +665,12 @@ public class BluetoothChatService {
                            .sendToTarget();
                     	appendDataLog(buf, System.currentTimeMillis()+","+ lines[0]);
                     	
-                    	// classifier
-                       	stayclassy=1;
+                    	//  classifier
+                    	//input
+
+                    	
+                    	//output
+                       	stayclassy = 1;//newclassy.classify(lines[0].split(","));
                        	
                        	
                     	// output
@@ -715,7 +716,7 @@ public class BluetoothChatService {
         /**
          * Write to the connected OutStream.
          * @param buffer  The bytes to write
-         */
+         **/
         public void write(byte[] buffer) {
             try {
                 mmOutStream.write(buffer);
@@ -737,4 +738,74 @@ public class BluetoothChatService {
             }
         }         
     }
+
+/*
+
+    public class PostureClassifier {
+
+    	protected svm_model model = null;
+    	
+    	public PostureClassifier(){
+    		// load model
+    	}	
+    	
+    	public void train(){
+    		// check speed vs C
+    	}
+    	
+    	public int predict(svm_node[] x){
+    		// check x
+    		return (int) svm.svm_predict(model, x);
+    	}
+    	
+    	public void loadModel(String modelFilename) throws IOException{
+    		BufferedReader input = new BufferedReader(new FileReader(modelFilename));
+    		model = svm.svm_load_model(input.readLine());
+    		//System.out.println(model.rho[0]);
+    		input.close();
+    	}
+    	
+    	public svm_node[] createExample(String[] args){
+    			svm_node[] x = new svm_node[30];
+    			for (int i = 0; i<30; i++)
+    				{
+    				x[i]=createNode(i+1,new Double(args[i]));
+    				}
+    			return x;
+    	}
+    	
+    	private svm_node createNode(int index, double value)
+    	{
+    		svm_node node = new svm_node();
+    		node.index=index;
+    		node.value=value;
+    		return node;
+    	}
+    	
+    	public int classify(String[] args){
+    		String modelFilename = "/Users/tholloway/Desktop/libsvm-3.11/train.scale.model";
+    		
+    		svm_node[] example = null;
+    		PostureClassifier classifier = new PostureClassifier();
+    		try {
+    			classifier.loadModel(modelFilename);
+//    			svm_node[] example = classifier.createExample(0.653763,0.331288,0.910686,0.329741,0.626838,0.93032,0.571429,0.705128,0.889483,0.0636364,0.263793,0.812379,0.37659,0.0649123,0.807615,0.272727,0.250386,0.78937,0.1875,0.360544,0.761364,0.284768,0.805808,0.736364,0.254762,0.785473,0.730673,0.75811,0.844488,0.486141); 
+//    			example = classifier.createExample(0.64086,0.380368,0.940989,0.310345,0.676471,0.934087,0.583851,0.732372,0.877005,0.0431818,0.291379,0.825919,0.318066,0.045614,0.819639,0.198135,0.222566,0.779528,0.166667,0.311224,0.736742,0.245033,0.805808,0.747727,0.271429,0.805743,0.730673,0.769481,0.836614,0.477612); 
+
+    			
+    			example = classifier.createExample(args);
+    			
+
+    			//System.out.println(prediction);
+    			} 
+    		catch (IOException e) {
+    			e.printStackTrace();}
+			return classifier.predict(example);
+    	}
+    }
+
+*/
 }
+
+
+

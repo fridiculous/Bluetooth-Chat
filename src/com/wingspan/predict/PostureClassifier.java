@@ -1,4 +1,4 @@
-package com.wingspan.predict;
+package com.wingspan.android.bluetooth;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

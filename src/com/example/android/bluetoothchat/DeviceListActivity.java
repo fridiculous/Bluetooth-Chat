@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.wingspan.android.bluetooth;
+package com.example.android.bluetoothchat;
 
 import java.util.Set;
 
@@ -36,8 +36,6 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import com.wingspan.android.BluetoothChat.R;
 
 /**
  * This Activity appears as a dialog. It lists any paired devices and

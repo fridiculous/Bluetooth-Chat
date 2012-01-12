@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package com.wingspan.android.bluetooth;
+package com.example.android.bluetoothchat;
 
-//import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-//import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,9 +25,6 @@ import java.io.OutputStream;
 import java.util.Date;
 import java.util.UUID;
 
-//import libsvm.svm;
-//import libsvm.svm_model;
-//import libsvm.svm_node;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;

@@ -749,7 +749,7 @@ public class BluetoothChatService {
 
 
 
-    public class PostureClassifier {
+    class PostureClassifier {
 
     	protected svm_model model = null;
     	
@@ -768,7 +768,7 @@ public class BluetoothChatService {
     	
     	public void loadModel(String modelFilename) throws IOException{
     		BufferedReader input = new BufferedReader(new FileReader(modelFilename));
-    		model = svm.svm_load_model(input.readLine());
+    		model = svm.svm_load_model(modelFilename);
     		//System.out.println(model.rho[0]);
     		input.close();
     	}
@@ -803,29 +803,40 @@ public class BluetoothChatService {
     	}
     	
     	
-    	public int classify(String[] args){
-    		String modelFilename = "/Users/tholloway/Desktop/libsvm-3.11/train.scale.model";
+    	public int classify(String[] args) throws IOException{
+    		String modelFilename = "/res/raw/train.model";
+    		
+			//InputStream databaseInputStream = getResources().openRawResource(R.raw.trainscalemodel);
     		
     		svm_node[] example = null;
     		PostureClassifier classifier = new PostureClassifier();
-    		try {
-    			classifier.loadModel(modelFilename);
-//    			svm_node[] example = classifier.createExample(0.653763,0.331288,0.910686,0.329741,0.626838,0.93032,0.571429,0.705128,0.889483,0.0636364,0.263793,0.812379,0.37659,0.0649123,0.807615,0.272727,0.250386,0.78937,0.1875,0.360544,0.761364,0.284768,0.805808,0.736364,0.254762,0.785473,0.730673,0.75811,0.844488,0.486141); 
-//    			example = classifier.createExample(0.64086,0.380368,0.940989,0.310345,0.676471,0.934087,0.583851,0.732372,0.877005,0.0431818,0.291379,0.825919,0.318066,0.045614,0.819639,0.198135,0.222566,0.779528,0.166667,0.311224,0.736742,0.245033,0.805808,0.747727,0.271429,0.805743,0.730673,0.769481,0.836614,0.477612); 
-
-    			
-    			example = classifier.createExample(args);
-    			
-
-    			//System.out.println(prediction);
-    			} 
-    		catch (IOException e) {
-    			e.printStackTrace();}
+    		example = classifier.createExample(args);
 			return classifier.predict(example);
     	}   	
-    	
     }  
 
+    /*
+    public int main(String[] args){
+		String modelFilename = "/Users/tholloway/Desktop/libsvm-3.11/train.scale.model";
+		
+		svm_node[] example = null;
+		PostureClassifier classifier = new PostureClassifier();
+		try {
+			classifier.loadModel(modelFilename);
+//			svm_node[] example = classifier.createExample(0.653763,0.331288,0.910686,0.329741,0.626838,0.93032,0.571429,0.705128,0.889483,0.0636364,0.263793,0.812379,0.37659,0.0649123,0.807615,0.272727,0.250386,0.78937,0.1875,0.360544,0.761364,0.284768,0.805808,0.736364,0.254762,0.785473,0.730673,0.75811,0.844488,0.486141); 
+//			example = classifier.createExample(0.64086,0.380368,0.940989,0.310345,0.676471,0.934087,0.583851,0.732372,0.877005,0.0431818,0.291379,0.825919,0.318066,0.045614,0.819639,0.198135,0.222566,0.779528,0.166667,0.311224,0.736742,0.245033,0.805808,0.747727,0.271429,0.805743,0.730673,0.769481,0.836614,0.477612); 
+
+			
+			example = classifier.createExample(args);
+			
+
+			//System.out.println(prediction);
+			} 
+		catch (IOException e) {
+			e.printStackTrace();}
+		return classifier.predict(example);
+	} */  
+    
 }
 
 

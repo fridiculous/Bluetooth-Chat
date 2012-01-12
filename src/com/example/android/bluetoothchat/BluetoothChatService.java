@@ -16,8 +16,10 @@
 
 package com.example.android.bluetoothchat;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +27,9 @@ import java.io.OutputStream;
 import java.util.Date;
 import java.util.UUID;
 
+import libsvm.svm;
+import libsvm.svm_model;
+import libsvm.svm_node;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -79,6 +84,16 @@ public class BluetoothChatService {
     private static final int movavgnum = 870/5; //1 min
     public double[] movavg = new double[movavgnum];    
     public boolean alarmOn = false;
+    
+    private int[] normrange =  {271, 736,    	     224, 876,
+    	     62, 689,    	     304, 768,    	     147, 691,    	     177, 708,
+    	     136, 780,    	     192, 816,    	     192, 753,    	     352, 792,
+    	     248, 828,    	     188, 705,    	     371, 764,    	     318, 888,
+    	     229, 728,    	     323, 752,    	     236, 883,    	     240, 748,
+    	     280, 664,    	     220, 808,    	     243, 771,    	     243, 847,
+    	     224, 775,    	     312, 752,    	     280, 700,   	     214, 806,
+    	     327, 728,    	     105, 721,    	     323, 831,    	     259, 728};
+   
     
     public double mean(double[] p)
     {
@@ -627,7 +642,7 @@ public class BluetoothChatService {
             int bytes=1;
             String stringer = "";
             String[] lines;
-//            PostureClassifier newclassy = null;
+            PostureClassifier newclassy = null;
             int stayclassy;
 
             
@@ -665,7 +680,7 @@ public class BluetoothChatService {
 
                     	
                     	//output
-                       	stayclassy = 1;//newclassy.classify(lines[0].split(","));
+                       	stayclassy = newclassy.classify(lines[0].split(","));
                        	
                        	
                     	// output
@@ -734,7 +749,7 @@ public class BluetoothChatService {
         }         
     }
 
-/*
+
 
     public class PostureClassifier {
 
@@ -761,10 +776,12 @@ public class BluetoothChatService {
     	}
     	
     	public svm_node[] createExample(String[] args){
-    			svm_node[] x = new svm_node[30];
+    	
+    		double[] doubleargs = normalize(args);
+    		svm_node[] x = new svm_node[30];
     			for (int i = 0; i<30; i++)
     				{
-    				x[i]=createNode(i+1,new Double(args[i]));
+    				x[i]=createNode(i+1,doubleargs[i]);
     				}
     			return x;
     	}
@@ -776,6 +793,17 @@ public class BluetoothChatService {
     		node.value=value;
     		return node;
     	}
+    	
+    	private double[] normalize(String[] args )
+    	{
+    	double[] temp = new double[30];
+    		for (int k=0;k<30;k++)
+    		{	
+    			temp[k]=(new Double(args[k])-normrange[2*k+1])/(normrange[2*k+1]-normrange[2*k]);
+    		}
+    		return temp;
+    	}
+    	
     	
     	public int classify(String[] args){
     		String modelFilename = "/Users/tholloway/Desktop/libsvm-3.11/train.scale.model";
@@ -796,10 +824,10 @@ public class BluetoothChatService {
     		catch (IOException e) {
     			e.printStackTrace();}
 			return classifier.predict(example);
-    	}
-    }
+    	}   	
+    	
+    }  
 
-*/
 }
 
 

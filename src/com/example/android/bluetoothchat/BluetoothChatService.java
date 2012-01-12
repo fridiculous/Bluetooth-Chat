@@ -81,7 +81,7 @@ public class BluetoothChatService {
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
     public BufferedWriter buf;
-    private static final int movavgnum = 870/5; //1 min
+    private static final int movavgnum = 1;//870/870; //1 min
     public double[] movavg = new double[movavgnum];    
     public boolean alarmOn = false;
     
@@ -670,17 +670,15 @@ public class BluetoothChatService {
                     lines = splitLines(stringer);
                     while (lines.length > 1)
                     	{
-                    	//appendDataLog(buf, "lines.length"+Integer.toString(lines.length));                    	
+                       	stayclassy = newclassy.classify(lines[0].split(","));
+
                     	mHandler.obtainMessage(BluetoothChat.MESSAGE_READ, lines[0].getBytes().length, -1, lines[0].getBytes())
                            .sendToTarget();
                     	appendDataLog(buf, System.currentTimeMillis()+","+ lines[0]);
                     	
-                    	//  classifier
-                    	//input
-
                     	
                     	//output
-                       	stayclassy = newclassy.classify(lines[0].split(","));
+
                        	
                        	
                     	// output

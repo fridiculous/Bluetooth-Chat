@@ -4,7 +4,7 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry excluding="com/wingspan/visualization/|com/wingspan/android/bluetooth/PostureClassifier.java|com/wingspan/predict/" kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="lib" path="C:/Users/Simon/Dropbox/Posture Project/src/classification/libsvm.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Simon/workspace/robotium-solo-3.1-javadoc.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Simon/Dropbox/Posture Project/src/classification/libsvm2.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

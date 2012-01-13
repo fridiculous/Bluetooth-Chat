@@ -16,10 +16,8 @@
 
 package com.example.android.bluetoothchat;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,11 +79,15 @@ public class BluetoothChatService {
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
     public BufferedWriter buf;
-    private static final int movavgnum = 1;//870/870; //1 min
+    private static final int movavgnum = 50;//870/870; //1 min
     public double[] movavg = new double[movavgnum];    
     public boolean alarmOn = false;
-    
-    private int[] normrange =  {271, 736,    	     224, 876,
+    private String modelFilename = "sdcard/dropbox/Android/train.model";	
+    private svm_model model = null;
+    private int mover=0;
+    private int outer=0;
+    	
+    private int[] normrange =   {271, 736,    	     224, 876,
     	     62, 689,    	     304, 768,    	     147, 691,    	     177, 708,
     	     136, 780,    	     192, 816,    	     192, 753,    	     352, 792,
     	     248, 828,    	     188, 705,    	     371, 764,    	     318, 888,
@@ -94,6 +96,62 @@ public class BluetoothChatService {
     	     224, 775,    	     312, 752,    	     280, 700,   	     214, 806,
     	     327, 728,    	     105, 721,    	     323, 831,    	     259, 728};
    
+  	public int predict(svm_node[] x){
+  		return (int) svm.svm_predict(model, x);
+    	}
+    	
+    public void loadModel(String modelFilename) throws IOException{
+    	
+    	File file = new File(modelFilename);  
+    	
+    	model = svm.svm_load_model(file);
+    		//System.out.println(model.rho[0]);
+    }
+
+
+	public svm_node[] createExample(String[] args){
+    	
+    	double[] doubleargs = normalize(args);
+    	svm_node[] x = new svm_node[30];
+    		for (int i = 0; i<30; i++)
+    			{
+    			x[i]=createNode(i+1,doubleargs[i]);
+    			}
+    		return x;
+    	}
+    	
+    private svm_node createNode(int index, double value)
+    	{
+    	svm_node node = new svm_node();
+    	node.index=index;
+    	node.value=value;
+    	return node;
+    	}
+    	
+    private double[] normalize(String[] args )
+    	{
+    	double[] temp = new double[30];
+    		for (int k=0;k<30;k++)
+    		{	
+    			temp[k]=(new Double(args[k])-normrange[2*k+1])/(normrange[2*k+1]-normrange[2*k]);
+    		}
+    		return temp;
+    	}
+    	    	
+    public int classify(String[] args) throws IOException{
+    		svm_node[] example = null;
+    		example = createExample(args);
+			
+    		mover++;
+    		if(mover>movavgnum)
+    			{
+    			outer = predict(example);
+    			mover=0;
+    			}
+    		
+    		return outer;
+    }   	  
+
     
     public double mean(double[] p)
     {
@@ -248,12 +306,14 @@ public class BluetoothChatService {
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
         mHandler = handler;
+               
     }
 
     /**
      * Set the current state of the chat connection
      * @param state  An integer defining the current connection state
      */
+        
     private synchronized void setState(int state) {
         if (D) Log.d(TAG, "setState() " + mState + " -> " + state);
         mState = state;
@@ -282,6 +342,24 @@ public class BluetoothChatService {
 
         setState(STATE_NONE);
 
+    	try {
+			loadModel(modelFilename);
+			Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
+            Bundle bundle = new Bundle();
+            bundle.putString(BluetoothChat.TOAST, "Model Successfully Loaded");
+            msg.setData(bundle);
+            mHandler.sendMessage(msg);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+            Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
+            Bundle bundle = new Bundle();
+            bundle.putString(BluetoothChat.TOAST, "Model Failed to load");
+            msg.setData(bundle);
+            mHandler.sendMessage(msg);
+		}
+        
+        
         // Start the thread to listen on a BluetoothServerSocket
         /*if (mSecureAcceptThread == null) {
             mSecureAcceptThread = new AcceptThread(true);
@@ -636,15 +714,14 @@ public class BluetoothChatService {
         }
 
         
-        public void run() {
+		public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             byte[] buffer = new byte[1024];
             int bytes=1;
             String stringer = "";
             String[] lines;
-            PostureClassifier newclassy = null;
             int stayclassy;
-
+    		          
             
             // Keep listening to the InputStream while connected
             while (true) {
@@ -670,16 +747,15 @@ public class BluetoothChatService {
                     lines = splitLines(stringer);
                     while (lines.length > 1)
                     	{
-                       	stayclassy = newclassy.classify(lines[0].split(","));
 
                     	mHandler.obtainMessage(BluetoothChat.MESSAGE_READ, lines[0].getBytes().length, -1, lines[0].getBytes())
                            .sendToTarget();
                     	appendDataLog(buf, System.currentTimeMillis()+","+ lines[0]);
-                    	
+
+                       	stayclassy = classify(lines[0].split(","));
+
                     	
                     	//output
-
-                       	
                        	
                     	// output
                     	if ((movingAverage(stayclassy)==1)&&(alarmOn==false))
@@ -746,97 +822,7 @@ public class BluetoothChatService {
             }
         }         
     }
-
-
-
-    class PostureClassifier {
-
-    	protected svm_model model = null;
-    	
-    	public PostureClassifier(){
-    		// load model
-    	}	
-    	
-    	public void train(){
-    		// check speed vs C
-    	}
-    	
-    	public int predict(svm_node[] x){
-    		// check x
-    		return (int) svm.svm_predict(model, x);
-    	}
-    	
-    	public void loadModel(String modelFilename) throws IOException{
-    		BufferedReader input = new BufferedReader(new FileReader(modelFilename));
-    		model = svm.svm_load_model(modelFilename);
-    		//System.out.println(model.rho[0]);
-    		input.close();
-    	}
-    	
-    	public svm_node[] createExample(String[] args){
-    	
-    		double[] doubleargs = normalize(args);
-    		svm_node[] x = new svm_node[30];
-    			for (int i = 0; i<30; i++)
-    				{
-    				x[i]=createNode(i+1,doubleargs[i]);
-    				}
-    			return x;
-    	}
-    	
-    	private svm_node createNode(int index, double value)
-    	{
-    		svm_node node = new svm_node();
-    		node.index=index;
-    		node.value=value;
-    		return node;
-    	}
-    	
-    	private double[] normalize(String[] args )
-    	{
-    	double[] temp = new double[30];
-    		for (int k=0;k<30;k++)
-    		{	
-    			temp[k]=(new Double(args[k])-normrange[2*k+1])/(normrange[2*k+1]-normrange[2*k]);
-    		}
-    		return temp;
-    	}
-    	
-    	
-    	public int classify(String[] args) throws IOException{
-    		String modelFilename = "/res/raw/train.model";
-    		
-			//InputStream databaseInputStream = getResources().openRawResource(R.raw.trainscalemodel);
-    		
-    		svm_node[] example = null;
-    		PostureClassifier classifier = new PostureClassifier();
-    		example = classifier.createExample(args);
-			return classifier.predict(example);
-    	}   	
-    }  
-
-    /*
-    public int main(String[] args){
-		String modelFilename = "/Users/tholloway/Desktop/libsvm-3.11/train.scale.model";
-		
-		svm_node[] example = null;
-		PostureClassifier classifier = new PostureClassifier();
-		try {
-			classifier.loadModel(modelFilename);
-//			svm_node[] example = classifier.createExample(0.653763,0.331288,0.910686,0.329741,0.626838,0.93032,0.571429,0.705128,0.889483,0.0636364,0.263793,0.812379,0.37659,0.0649123,0.807615,0.272727,0.250386,0.78937,0.1875,0.360544,0.761364,0.284768,0.805808,0.736364,0.254762,0.785473,0.730673,0.75811,0.844488,0.486141); 
-//			example = classifier.createExample(0.64086,0.380368,0.940989,0.310345,0.676471,0.934087,0.583851,0.732372,0.877005,0.0431818,0.291379,0.825919,0.318066,0.045614,0.819639,0.198135,0.222566,0.779528,0.166667,0.311224,0.736742,0.245033,0.805808,0.747727,0.271429,0.805743,0.730673,0.769481,0.836614,0.477612); 
-
-			
-			example = classifier.createExample(args);
-			
-
-			//System.out.println(prediction);
-			} 
-		catch (IOException e) {
-			e.printStackTrace();}
-		return classifier.predict(example);
-	} */  
-    
+   
 }
 
 

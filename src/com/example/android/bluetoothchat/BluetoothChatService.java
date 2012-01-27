@@ -82,7 +82,7 @@ public class BluetoothChatService {
     private static final int movavgnum = 50;//870/870; //1 min
     public double[] movavg = new double[movavgnum];    
     public boolean alarmOn = false;
-    private String modelFilename = "sdcard/dropbox/Android/train.model";	
+/*    private String modelFilename = "sdcard/dropbox/Android/train.model";	
     private svm_model model = null;
     private int mover=0;
     private int outer=0;
@@ -150,7 +150,7 @@ public class BluetoothChatService {
     			}
     		
     		return outer;
-    }   	  
+    }   	  */
 
     
     public double mean(double[] p)
@@ -342,6 +342,7 @@ public class BluetoothChatService {
 
         setState(STATE_NONE);
 
+        /*
     	try {
 			loadModel(modelFilename);
 			Message msg = mHandler.obtainMessage(BluetoothChat.MESSAGE_TOAST);
@@ -358,7 +359,7 @@ public class BluetoothChatService {
             msg.setData(bundle);
             mHandler.sendMessage(msg);
 		}
-        
+        */
         
         // Start the thread to listen on a BluetoothServerSocket
         /*if (mSecureAcceptThread == null) {
@@ -752,7 +753,7 @@ public class BluetoothChatService {
                            .sendToTarget();
                     	appendDataLog(buf, System.currentTimeMillis()+","+ lines[0]);
 
-                       	stayclassy = classify(lines[0].split(","));
+                       	stayclassy = 0;//classify(lines[0].split(","));
 
                     	
                     	//output

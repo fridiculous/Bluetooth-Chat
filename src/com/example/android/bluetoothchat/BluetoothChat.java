@@ -83,7 +83,7 @@ public class BluetoothChat extends Activity {
     // Local Bluetooth adapter
     private BluetoothAdapter mBluetoothAdapter = null;
     // Member object for the chat services
-    private BluetoothChatService mChatService = null;
+    private BluetoothThread1 mChatService = null;
 
     //Timestamp
     //SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
@@ -145,7 +145,7 @@ public class BluetoothChat extends Activity {
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
         if (mChatService != null) {
             // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+            if (mChatService.getState() == BluetoothThread1.STATE_NONE) {
               // Start the Bluetooth chat services
               mChatService.start();
             }
@@ -176,7 +176,7 @@ public class BluetoothChat extends Activity {
         });
 
         // Initialize the BluetoothChatService to perform bluetooth connections
-        mChatService = new BluetoothChatService(this, mHandler);
+        mChatService = new BluetoothThread1(this, mHandler);
 
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
@@ -218,7 +218,7 @@ public class BluetoothChat extends Activity {
      */
     private void sendMessage(String message) {
         // Check that we're actually connected before trying anything
-        if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+        if (mChatService.getState() != BluetoothThread1.STATE_CONNECTED) {
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -260,16 +260,16 @@ public class BluetoothChat extends Activity {
             case MESSAGE_STATE_CHANGE:
                 if(D) Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
                 switch (msg.arg1) {
-                case BluetoothChatService.STATE_CONNECTED:
+                case BluetoothThread1.STATE_CONNECTED:
                     mTitle.setText(R.string.title_connected_to);
                     mTitle.append(mConnectedDeviceName);
                     mConversationArrayAdapter.clear();
                     break;
-                case BluetoothChatService.STATE_CONNECTING:
+                case BluetoothThread1.STATE_CONNECTING:
                     mTitle.setText(R.string.title_connecting);
                     break;
-                case BluetoothChatService.STATE_LISTEN:
-                case BluetoothChatService.STATE_NONE:
+                case BluetoothThread1.STATE_LISTEN:
+                case BluetoothThread1.STATE_NONE:
                     mTitle.setText(R.string.title_not_connected);
                     break;
                 }
